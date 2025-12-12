@@ -2,7 +2,6 @@
 #define _QUADTREE__H
 
 #include <cstdint>
-#include <cstdlib>
 #include <type_traits>
 #include <gsl/gsl>
 
