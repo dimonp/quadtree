@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.50)
+project(quad_tree VERSION 0.1 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+set(CMAKE_CXX_CLANG_TIDY_ARGS "-checks=cppcoreguidelines-*,modernize-*")
+
+add_subdirectory(src)
+add_subdirectory(math)
+add_subdirectory(benchmark)
+
+option(BUILD_TESTING "Build the project's tests" ON)
+
+if(BUILD_TESTING)
+  include(CTest)
+  add_subdirectory(test)
+endif()
