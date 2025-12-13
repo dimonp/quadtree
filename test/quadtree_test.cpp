@@ -3,7 +3,6 @@
 
 #include "quadtree.h"
 #include "quadtree_math.h"
-#include "vector"
 
 
 // Test fixture for QuadTree tests

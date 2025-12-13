@@ -1,10 +1,10 @@
-# C++ Quad tree Implementation
+# C++ quadtree implementation
 
-This project provides a generic, efficient implementation of a QuadTree data structure for spatial partitioning in 3D space. The implementation is provides features for frustum culling and line intersection queries.
+This project provides a generic, efficient implementation of a quadtree data structure for spatial partitioning in 3D space. The implementation is provides features for frustum culling and line intersection queries.
 
 ## Features
 
-- Generic QuadTree implementation that can store any data type
+- Generic quadtree implementation that can store any data type
 - Efficient spatial partitioning in 3D space
 - Frustum culling for view-dependent queries
 - Line intersection queries for ray casting
@@ -15,10 +15,10 @@ This project provides a generic, efficient implementation of a QuadTree data str
 ## Project Structure
 
 ```
-├── src/                 # Core QuadTree implementation
+├── src/                 # Core quadtree implementation
 ├── math/                # Mathematical types and operations using Eigen
 ├── test/                # Unit tests using Google Test
-├── benchmark/            # Performance benchmarks using Google Benchmark
+├── benchmark/           # Performance benchmarks using Google Benchmark
 ├── CMakeLists.txt       # Main CMake configuration
 └── README.md            # This file
 ```
@@ -52,7 +52,7 @@ cmake --build .
 
 ## Usage
 
-### Basic QuadTree Usage
+### Basic quadtree Usage
 
 ```cpp
 #include "quadtree.h"
@@ -118,7 +118,7 @@ QuadTreeCollectorType::collect_by_line_intersect(tree.get_root_node(), line, col
 
 ### QuadTree Class
 
-The main QuadTree class is a template class with the following parameters:
+The main quadtree class is a template class with the following parameters:
 - `T`: The type of data stored in each node
 - `VEC3`: 3D vector type (default: qtree::vector3)
 - `BBOX3`: 3D bounding box type (default: qtree::bbox3)
@@ -185,7 +185,7 @@ cd build
 
 The benchmarks measure performance of various operations:
 
-- QuadTree initialization
+- Quadtree initialization
 - Node access operations
 - Frustum culling collection
 - Line intersection collection

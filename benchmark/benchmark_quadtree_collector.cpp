@@ -1,5 +1,4 @@
 #include <benchmark/benchmark.h>
-#include <vector>
 
 #include "quadtree.h"
 #include "quadtree_collector.h"

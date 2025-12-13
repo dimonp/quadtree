@@ -1,4 +1,3 @@
-#include <vector>
 #include <random>
 #include <benchmark/benchmark.h>
 
