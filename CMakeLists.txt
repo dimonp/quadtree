@@ -8,11 +8,12 @@ set(CMAKE_CXX_CLANG_TIDY_ARGS "-checks=cppcoreguidelines-*,modernize-*")
 
 add_subdirectory(src)
 add_subdirectory(math)
-add_subdirectory(benchmark)
 
 option(BUILD_TESTING "Build the project's tests" ON)
 
 if(BUILD_TESTING)
+  add_subdirectory(benchmark)
+
   include(CTest)
   add_subdirectory(test)
 endif()

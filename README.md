@@ -38,16 +38,16 @@ This project uses CMake for building. To build the project:
 mkdir build
 cd build
 cmake ..
-make
+cmake --build .
 ```
 
-To build with tests and benchmarks:
+To build without tests and benchmarks:
 
 ```bash
 mkdir build
 cd build
-cmake -DBUILD_TESTING=ON ..
-make
+cmake -DBUILD_TESTING=OFF ..
+cmake --build .
 ```
 
 ## Usage
@@ -161,7 +161,7 @@ The project includes comprehensive unit tests using Google Test. To run the test
 
 ```bash
 cd build
-make test
+ctest .
 ```
 
 Or to run the tests directly:
