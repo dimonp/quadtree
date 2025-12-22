@@ -152,24 +152,6 @@ public:
         void initialize(QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>* tree, uint8_t level, uint16_t col, uint16_t row);
 
         /**
-         * @brief Get the level of this node.
-         * @return The level
-         */
-        // uint8_t get_level() const;
-
-        /**
-         * @brief Get the column of this node.
-         * @return The column
-         */
-        // uint16_t get_column() const;
-
-        /**
-         * @brief Get the row of this node.
-         * @return The row
-         */
-        // uint16_t get_row() const;
-
-        /**
          * @brief Get the bounding box of this node.
          * @return const reference to the bounding box
          */
@@ -213,10 +195,20 @@ public:
         */
         bool has_children() const;
 
+        /**
+         * @brief Recursively optimize the tree by removing empty branches.
+         *
+         * This method traverses the tree recursively and removes branches that
+         * don't contain any elements. It helps to reduce cpu usage by skiping
+         * empty nodes that don't involved to spatial queries.
+         *
+         * @return true if this node or any of its descendants contain elements, false otherwise
+         */
+        bool optimize_recursive();
     private:
         U element_ = {};
 
-        Node* children_[4] = { nullptr, nullptr, nullptr, nullptr };
+        std::array<Node*, 4> children_;
         BBOX3 bbox_;
 
         friend class QuadTree;
@@ -235,7 +227,8 @@ private:
 // QuadTree implementation
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline void
+inline
+void
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::initialize(const BBOX3& box, uint8_t depth) {
     Expects(depth > 0 && "Tree depth must be greater than 0");
 
@@ -253,7 +246,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::initialize(const BBOX3& box, u
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline void
+inline
+void
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::reset()
 {
     node_array_.clear();
@@ -263,21 +257,24 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::reset()
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline uint8_t
+inline
+uint8_t
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_tree_depth() const
 {
     return tree_depth_;
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline const BBOX3&
+inline
+const BBOX3&
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_root_bbox() const
 {
     return root_bbox_;
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline size_t
+inline
+size_t
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::calculate_number_nodes(uint8_t level) const
 {
     // Formula: (4^(level+1) - 1) / 3
@@ -287,14 +284,16 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::calculate_number_nodes(uint8_t
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 
-inline size_t
+inline
+size_t
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_number_nodes() const
 {
     return node_array_.size();
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline size_t
+inline
+size_t
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::calculate_node_index(uint8_t level, uint16_t col, uint16_t row) const
 {
     Expects((col >= 0) && (col < (1 << level)));
@@ -305,7 +304,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::calculate_node_index(uint8_t l
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>*
+inline
+typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>*
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::find_containment_node(const BBOX3& box)
 {
     Expects(!node_array_.empty());
@@ -313,7 +313,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::find_containment_node(const BB
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>&
+inline
+const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>&
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_root_node() const
 {
     Expects(node_array_.size() > 0);
@@ -321,7 +322,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_root_node() const
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>&
+inline
+typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>&
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_root_node()
 {
     Expects(node_array_.size() > 0);
@@ -329,7 +331,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_root_node()
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>&
+inline
+const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>&
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_node_by_index(size_t index) const
 {
     Expects(index < node_array_.size() && "Node index out of bounds");
@@ -337,7 +340,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_node_by_index(size_t index
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-inline typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>&
+inline
+typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>&
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_node_by_index(size_t index)
 {
     Expects(index < node_array_.size() && "Node index out of bounds");
@@ -346,6 +350,7 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::get_node_by_index(size_t index
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 template <typename U>
+inline
 void
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::initialize(QuadTree* tree, uint8_t level, uint16_t col, uint16_t row)
 {
@@ -385,6 +390,7 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::initialize(QuadTree* 
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 template <typename U>
+inline
 typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<U>*
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::find_containment_node_recursive(const BBOX3& check_box)
 {
@@ -416,7 +422,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::find_containment_node
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 template <typename U>
-inline const BBOX3&
+inline
+const BBOX3&
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::get_bbox() const
 {
     return bbox_;
@@ -424,7 +431,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::get_bbox() const
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 template <typename U>
-inline void
+inline
+void
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::set_element(const T& element)
 {
     element_ = element;
@@ -432,7 +440,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::set_element(const T& 
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 template <typename U>
-inline const T&
+inline
+const T&
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::get_element() const
 {
     return element_;
@@ -440,7 +449,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::get_element() const
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 template <typename U>
-inline typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<U>*
+inline
+typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<U>*
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::get_child_at(size_t index)
 {
     Expects(index < 4);
@@ -449,7 +459,8 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::get_child_at(size_t i
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 template <typename U>
-const inline typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<U>*
+inline
+const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<U>*
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::get_child_at(size_t index) const
 {
     Expects(index < 4);
@@ -458,13 +469,38 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::get_child_at(size_t i
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 template <typename U>
-inline bool
+inline
+bool
 QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::has_children() const
 {
     // A node has children if its first child is not null
     // This assumes that children are either all allocated or all nullptr
     return get_child_at(0) != nullptr;
 }
+
+template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
+template <typename U>
+inline
+bool
+QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::optimize_recursive()
+{
+    // Check children first
+    if (has_children()) {
+        for (Node* node_ptr : children_) {
+            bool has_element = node_ptr->optimize_recursive();
+            if (has_element) {
+                return true;
+            }
+        }
+
+        // if children nodes hasn't payload
+        children_.fill(nullptr);
+    }
+
+    // leaf node
+    return static_cast<bool>(element_);
+}
+
 
 }
 

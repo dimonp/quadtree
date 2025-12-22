@@ -4,6 +4,7 @@ add_executable(quadtree_test
     quadtree_test.cpp
     quadtree_adv_test.cpp
     quadtree_collector_test.cpp
+    quadtree_comprehensive_test.cpp
     main.cpp
 )
 target_include_directories(quadtree_test PRIVATE quadtree)
