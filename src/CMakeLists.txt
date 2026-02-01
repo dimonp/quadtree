@@ -9,6 +9,7 @@ target_include_directories(quadtree INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include/quadtree>
 )
+target_link_libraries(quadtree INTERFACE quadtree_project_options)
 target_link_libraries(quadtree INTERFACE Microsoft.GSL::GSL)
 
 install(TARGETS quadtree
