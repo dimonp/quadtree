@@ -4,6 +4,7 @@ add_library(quadtree INTERFACE
     quadtree.h
     quadtree_collector.h
 )
+add_library(quadtree::quadtree ALIAS quadtree)
 
 target_include_directories(quadtree INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
