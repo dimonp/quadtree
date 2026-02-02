@@ -46,7 +46,7 @@ To build without tests and benchmarks:
 ```bash
 mkdir build
 cd build
-cmake -DBUILD_TESTING=OFF ..
+cmake -DQUADTREE_BUILD_TESTING=OFF ..
 cmake --build .
 ```
 

@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 #include <gmock/gmock.h>
 
-#include "quadtree.h"
-#include "quadtree_collector.h"
-#include "quadtree_math.h"
+#include "quadtree/quadtree.h"
+#include "quadtree/quadtree_collector.h"
+#include "quadtree/quadtree_math.h"
 
 // Test fixture for QuadTree tests
 class QuadTreeColectorTest : public ::testing::Test {

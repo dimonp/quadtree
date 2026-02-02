@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.50)
 
-option(BUILD_TESTING "Build the project's tests" ON)
-option(ENABLE_SANITIZERS "Enable all sanitizers" ON)  
-option(BUILD_MATH "Build the project's tests" ON)
-option(ENABLE_EXCEPTIONS "Enable exceptions" OFF)
+option(QUADTREE_BUILD_TESTING "Build the project's tests" ON)
+option(QUADTREE_ENABLE_SANITIZERS "Enable all sanitizers" ON)
+option(QUADTREE_BUILD_MATH "Build the project's tests" ON)
+option(QUADTREE_ENABLE_EXCEPTIONS "Enable exceptions" OFF)
 
-if(BUILD_MATH)
+if(QUADTREE_BUILD_MATH)
   list(APPEND VCPKG_MANIFEST_FEATURES "math")
 endif()
 
-if(BUILD_TESTING)
+if(QUADTREE_BUILD_TESTING)
   list(APPEND VCPKG_MANIFEST_FEATURES "tests")
 endif()
 
@@ -22,7 +22,7 @@ project(quad_tree VERSION 0.1 LANGUAGES CXX)
 
 add_library(quadtree_project_options INTERFACE IMPORTED)
 
-if (ENABLE_SANITIZERS)
+if (QUADTREE_ENABLE_SANITIZERS)
   if(MSVC)
     target_compile_options(quadtree_project_options INTERFACE /fsanitize=address /Zi /INCREMENTAL:NO)
     target_link_options(quadtree_project_options INTERFACE /INCREMENTAL:NO)
@@ -32,7 +32,7 @@ if (ENABLE_SANITIZERS)
   endif()
 endif()
 
-if (ENABLE_EXCEPTIONS)
+if (QUADTREE_ENABLE_EXCEPTIONS)
   if(MSVC)
     target_compile_options(quadtree_project_options INTERFACE /EHsc-)
     target_compile_options(quadtree_project_options INTERFACE /EHs-)
@@ -50,11 +50,11 @@ endif()
 
 add_subdirectory(src)
 
-if(BUILD_MATH)
+if(QUADTREE_BUILD_MATH)
   add_subdirectory(math)
 endif()
 
-if(BUILD_TESTING)
+if(QUADTREE_BUILD_TESTING AND QUADTREE_BUILD_MATH)
   add_subdirectory(benchmark)
   include(CTest)
   add_subdirectory(test)

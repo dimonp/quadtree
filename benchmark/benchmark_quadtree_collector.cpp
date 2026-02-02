@@ -1,8 +1,8 @@
 #include <benchmark/benchmark.h>
 
-#include "quadtree.h"
-#include "quadtree_collector.h"
-#include "quadtree_math.h"
+#include "quadtree/quadtree.h"
+#include "quadtree/quadtree_collector.h"
+#include "quadtree/quadtree_math.h"
 
 // Define types as in test files
 using QuadTreeType = qtree::QuadTree<int, qtree::vector3, qtree::bbox3, std::vector, std::allocator>;

@@ -7,8 +7,6 @@ add_executable(quadtree_test
     quadtree_comprehensive_test.cpp
     main.cpp
 )
-target_include_directories(quadtree_test PRIVATE quadtree)
-target_include_directories(quadtree_test PRIVATE quadtree_math)
 target_link_libraries(quadtree_test PRIVATE quadtree_project_options)
 target_link_libraries(quadtree_test PRIVATE
     GTest::gtest_main
