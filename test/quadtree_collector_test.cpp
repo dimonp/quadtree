@@ -24,6 +24,36 @@ protected:
     }
 };
 
+std::vector<qtree::plane3> 
+extract_planes(const Eigen::Matrix4f& vp) 
+{
+    std::vector<qtree::plane3> planes;
+    planes.reserve(6);
+    
+    auto row = [&](int i) { return vp.row(i).head<3>().transpose(); };
+    auto w_val = [&](int i) { return vp(i, 3); };
+
+    // Ближняя (Near)
+    planes.emplace_back(-(row(3) + row(2)), w_val(3) + w_val(2));
+    // Дальняя (Far)
+    planes.emplace_back(-(row(3) - row(2)), w_val(3) - w_val(2));
+    // Левая (Left)
+    planes.emplace_back(-(row(3) + row(0)), w_val(3) + w_val(0));
+    // Правая (Right)
+    planes.emplace_back(-(row(3) - row(0)), w_val(3) - w_val(0));
+    // Верхняя (Top)
+    planes.emplace_back(-(row(3) - row(1)), w_val(3) - w_val(1));
+    // Нижняя (Bottom)
+    planes.emplace_back(-(row(3) + row(1)), w_val(3) + w_val(1));
+
+    // Нормализация нормалей для корректного расчета расстояний
+    for (auto& plane : planes) {
+        plane.normalize();
+    }
+
+    return planes;
+}
+
 // Test collect_by_frustum method with a node completely outside frustum
 TEST_F(QuadTreeColectorTest, CollectByFrustumOutside) {
     quad_tree_.initialize(root_box_, 2);
@@ -105,6 +135,38 @@ TEST_F(QuadTreeColectorTest, CollectByFrustumClipped) {
     EXPECT_THAT(collected, testing::UnorderedElementsAre(10, 30));
 }
 
+TEST_F(QuadTreeColectorTest, CollectByFrustumClippedPlanes) {
+    quad_tree_.initialize(root_box_, 2);
+
+    auto& root_node =  quad_tree_.get_root_node();
+
+    // Set elements in nodes
+    root_node.set_element(10); // Root
+    quad_tree_.get_node_by_index(1).set_element(20); // Child 1
+    quad_tree_.get_node_by_index(2).set_element(30); // Child 2
+
+    // Create a projection matrix that clips some nodes
+    // Using a perspective projection that only sees part of the quadtree
+    qtree::matrix44 projection;
+    projection.persp_fov_rh(3.14159f/4.0f, 1.0f, 1.0f, 1000.0f); // 45-degree FOV
+
+    // Position the camera to see only part of the quadtree
+    qtree::matrix44 view;
+    view.identity();
+    view.translate(qtree::vector3(50.0f, 0.0f, 0.0f)); // Move camera to the side
+    view.inverse();
+    projection = projection * view;
+
+    std::vector<int> collected;
+    std::vector<qtree::plane3> planes = extract_planes(projection);
+    QuadTreeCollectorSUT::collect_by_frustum(root_node, planes.data(), collected);
+
+    // Some elements should be collected (at least the root since it's partially visible)
+    // The exact number depends on the clipping, but should be >= 1
+    EXPECT_EQ(collected.size(), 2);
+    EXPECT_THAT(collected, testing::UnorderedElementsAre(10, 30));
+}
+
 // Test collect_by_frustum method with recursive traversal
 TEST_F(QuadTreeColectorTest, CollectByFrustumRecursive) {
     quad_tree_.initialize(root_box_, 2);
@@ -128,6 +190,35 @@ TEST_F(QuadTreeColectorTest, CollectByFrustumRecursive) {
 
     std::vector<int> collected;
     QuadTreeCollectorSUT::collect_by_frustum(root_node, projection, collected);
+
+    // At least the root should be collected since it's the entry point
+    EXPECT_GE(collected.size(), 1);
+    EXPECT_THAT(collected, testing::Contains(10));
+}
+
+TEST_F(QuadTreeColectorTest, CollectByFrustumRecursivePlanes) {
+    quad_tree_.initialize(root_box_, 2);
+
+    auto& root_node =  quad_tree_.get_root_node();
+
+    // Set elements in all nodes
+    root_node.set_element(10); // Root
+    quad_tree_.get_node_by_index(1).set_element(20); // Child 1
+    quad_tree_.get_node_by_index(2).set_element(30); // Child 2
+    quad_tree_.get_node_by_index(3).set_element(40); // Child 3
+    quad_tree_.get_node_by_index(4).set_element(50); // Child 4
+
+    // Create a projection matrix that clips the root but includes children
+    // This is a bit tricky to set up, so we'll use a simple case where
+    // the root is clipped but some children might be included
+    qtree::matrix44 projection;
+    projection.identity();
+    // Apply a small scale to make the frustum smaller than the root
+    projection.scale(qtree::vector3(0.5f, 1.0f, 0.5f));
+
+    std::vector<int> collected;
+    std::vector<qtree::plane3> planes = extract_planes(projection);
+    QuadTreeCollectorSUT::collect_by_frustum(root_node, planes.data(), collected);
 
     // At least the root should be collected since it's the entry point
     EXPECT_GE(collected.size(), 1);

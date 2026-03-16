@@ -1,6 +1,7 @@
 #ifndef _QUADTREE_COLLECTOR__H
 #define _QUADTREE_COLLECTOR__H
 
+#include <utility>
 #include "quadtree.h"
 
 namespace qtree {
@@ -28,9 +29,9 @@ public:
      * @param projection The view-projection matrix for frustum culling
      * @param collected Vector to store collected elements
      */
-    template<typename MAT44>
+    template<typename FRUSTUM>
     static void collect_by_frustum( const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
-                                    const MAT44& projection,
+                                    FRUSTUM&& frustum,
                                     ContainerT<T, AllocatorT<T>>& collected);
 
     /**
@@ -42,14 +43,14 @@ public:
      */
     template<typename LINE3>
     static void collect_by_line_intersect(  const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
-                                            const LINE3& line,
+                                            LINE3&& line,
                                             ContainerT<T, AllocatorT<T>>& collected);
 
 private:
 
-    template<typename MAT44>
+    template<typename FRUSTUM>
     static void recurse_collect_by_frustum( const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
-                                            const MAT44& projection,
+                                            FRUSTUM&& frustum,
                                             ContainerT<T, AllocatorT<T>>& collected);
 
     static void recurse_collect_all_nodes(  const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
@@ -58,43 +59,53 @@ private:
 
     template<typename LINE3>
     static void recurse_line_intersect( const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
-                                        const LINE3& line,
+                                        LINE3&& line,
                                         ContainerT<T, AllocatorT<T>>& collected);
 
 };
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-template<typename MAT44>
+template<typename FRUSTUM>
 inline void
 QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::collect_by_frustum(
     const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
-    const MAT44& projection,
+    FRUSTUM&& frustum,
     ContainerT<T, AllocatorT<T>>& collected)
 {
     collected.clear();
-    recurse_collect_by_frustum(node, projection, collected);
+    recurse_collect_by_frustum(
+        node, 
+        std::forward<FRUSTUM>(frustum), 
+        collected);
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 template<typename LINE3>
 inline void
-QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::collect_by_line_intersect(const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
-                                                const LINE3& line,
-                                                ContainerT<T, AllocatorT<T>>& collected)
+QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::collect_by_line_intersect(
+    const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
+    LINE3&& line,
+    ContainerT<T, AllocatorT<T>>& collected)
 {
     collected.clear();
-    recurse_line_intersect(node, line, collected);
+    recurse_line_intersect(
+        node, 
+        std::forward<LINE3>(line), 
+        collected
+    );
 }
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
-template<typename MAT44>
+template<typename FRUSTUM>
 inline void
-QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::recurse_collect_by_frustum( const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
-                                                  const MAT44& projection,
-                                                  ContainerT<T, AllocatorT<T>>& collected)
+QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::recurse_collect_by_frustum( 
+    const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
+    FRUSTUM&& frustum,
+    ContainerT<T, AllocatorT<T>>& collected)
 {
     // Determine the clipping status of the node's bounding box against the frustum
-    const typename BBOX3::ClipStatus clip_status = node.get_bbox().clipstatus(projection);
+    const typename BBOX3::ClipStatus clip_status = 
+        node.get_bbox().clipstatus(std::forward<FRUSTUM>(frustum));
 
     // If the node is completely outside the frustum, skip it and its children
     if (clip_status == BBOX3::Outside) {
@@ -119,7 +130,10 @@ QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::recurse_collect_by_fr
         // Recursively process children if they exist
         if (node.has_children()) {
             for(size_t i = 0; i < 4; ++i) {
-                recurse_collect_by_frustum(*node.get_child_at(i), projection, collected);
+                recurse_collect_by_frustum(
+                    *node.get_child_at(i), 
+                    std::forward<FRUSTUM>(frustum), 
+                    collected);
             }
         }
     }
@@ -127,8 +141,9 @@ QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::recurse_collect_by_fr
 
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 inline void
-QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::recurse_collect_all_nodes( const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
-                                                 ContainerT<T, AllocatorT<T>>& collected)
+QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::recurse_collect_all_nodes( 
+    const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
+    ContainerT<T, AllocatorT<T>>& collected)
 {
     // Add the element if it exists
     auto &element = node.get_element();
@@ -147,11 +162,12 @@ QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::recurse_collect_all_n
 template<typename T, typename VEC3, typename BBOX3, template<typename, typename> typename ContainerT, template<typename> class AllocatorT>
 template<typename LINE3>
 inline void
-QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::recurse_line_intersect(const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
-                                             const LINE3& line,
-                                             ContainerT<T, AllocatorT<T>>& collected)
+QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::recurse_line_intersect(
+    const typename QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::template Node<T>& node,
+    LINE3&& line,
+    ContainerT<T, AllocatorT<T>>& collected)
 {
-    if (node.get_bbox().test_intersection(line)) {
+    if (node.get_bbox().test_intersection(std::forward<LINE3>(line))) {
 
         auto &element = node.get_element();
         if (element) {
@@ -166,6 +182,6 @@ QuadTreeCollector<T, VEC3, BBOX3, ContainerT, AllocatorT>::recurse_line_intersec
     }
 }
 
-}
+} // namespace qtree
 
 #endif // _QUADTREE_COLLECTOR__H

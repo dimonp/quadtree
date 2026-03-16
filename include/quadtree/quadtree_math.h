@@ -7,13 +7,14 @@ namespace qtree {
 
 using line3 = Eigen::ParametrizedLine<float, 3>;
 using vector4 = Eigen::Vector4f;
+using plane3 = Eigen::Hyperplane<float, 3>;
 
 class vector3: public Eigen::Vector3f {
 public:
     vector3() = default;
-    vector3(const Eigen::Vector3f& m) : Eigen::Vector3f(m) {}
-    vector3(Eigen::Vector3f&& m) : Eigen::Vector3f(std::move(m)) {}
-    vector3(float x, float y, float z) : Eigen::Vector3f(x, y, z) {}
+    vector3(const Eigen::Vector3f& m) noexcept : Eigen::Vector3f(m) {}
+    vector3(Eigen::Vector3f&& m) noexcept : Eigen::Vector3f(std::move(m)) {}
+    vector3(float x, float y, float z) noexcept : Eigen::Vector3f(x, y, z) {}
 
     float get_x() const { return Eigen::Vector3f::x(); }
     float get_y() const { return Eigen::Vector3f::y(); }
@@ -22,8 +23,8 @@ public:
 
 class matrix44: public Eigen::Matrix4f {
 public:
-    matrix44() : Eigen::Matrix4f() {}
-    matrix44(const Eigen::Matrix4f& m) : Eigen::Matrix4f(m) {}
+    matrix44() noexcept : Eigen::Matrix4f() {}
+    matrix44(const Eigen::Matrix4f& m) noexcept : Eigen::Matrix4f(m) {}
 
     void identity()
     {
@@ -93,10 +94,10 @@ public:
         Clipped,
     };
 
-    bbox3() : Eigen::AlignedBox3f() {}
-    bbox3(const Eigen::AlignedBox3f& b) : Eigen::AlignedBox3f(b) {}
+    bbox3() noexcept : Eigen::AlignedBox3f() {}
+    bbox3(const Eigen::AlignedBox3f& b) noexcept : Eigen::AlignedBox3f(b) {}
 
-    bbox3(const vector3 &min, const vector3 &max)
+    bbox3(const vector3 &min, const vector3 &max) noexcept
         : Eigen::AlignedBox3f(min, max) {}
 
     vector3 get_min() const
@@ -127,7 +128,7 @@ public:
     // Check for intersection with a view volume defined by a view-projection matrix.
     inline
     ClipStatus
-    clipstatus(const matrix44& view_projection) const
+    clipstatus(const matrix44& view_projection) const noexcept
     {
         uint16_t and_flags = 0xffff;
         uint16_t or_flags  = 0;
@@ -162,11 +163,55 @@ public:
         else                     return Clipped;
     }
 
+    // Frustum planes in order
+    // NEAR, FAR, LEFT, RIGHT, TOP, BOTTOM
+    inline
+    ClipStatus
+    clipstatus(const qtree::plane3 planes[6]) const noexcept
+    {
+        const vector3 min = this->get_min();
+        const vector3 max = this->get_max();
+
+        bool is_clipped = false;
+
+        for (size_t i = 0; i < 6; ++i) {
+            const plane3& plane = planes[i];
+
+            // P-vertex: farthest point in the direction of the plane normal
+            vector3 p_vertex(
+                (plane.normal().x() > 0) ? max.x() : min.x(),
+                (plane.normal().y() > 0) ? max.y() : min.y(),
+                (plane.normal().z() > 0) ? max.z() : min.z()
+            );
+
+            // N-vertex: nearest point
+            vector3 n_vertex(
+                (plane.normal().x() > 0) ? min.x() : max.x(),
+                (plane.normal().y() > 0) ? min.y() : max.y(),
+                (plane.normal().z() > 0) ? min.z() : max.z()
+            );
+
+            float dist_p = plane.signedDistance(-p_vertex);
+            float dist_n = plane.signedDistance(-n_vertex);
+
+            // If the farthest point is behind the plane, the AABB is completely Outside
+            if (dist_n < 0) {
+                return Outside;
+            }
+
+            // If the nearest point is also behind the plane, the AABB is Clipped
+            if (dist_p < 0) {
+                is_clipped = true;
+            }        
+        }
+        return is_clipped ? Clipped : Inside;    
+    }
+
     inline
     bool
     test_intersection(
         const line3& line,
-        std::vector<vector3>* isect_points = nullptr) const
+        std::vector<vector3>* isect_points = nullptr) const noexcept
     {
         constexpr float kRelTolerance = 1e-6f;
 
@@ -223,8 +268,6 @@ public:
 
 };
 
-
-
-}
+} // namespace qtree
 
 #endif // _MATH__H

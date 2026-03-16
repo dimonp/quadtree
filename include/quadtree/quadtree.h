@@ -501,8 +501,7 @@ QuadTree<T, VEC3, BBOX3, ContainerT, AllocatorT>::Node<U>::optimize_recursive()
     return static_cast<bool>(element_);
 }
 
-
-}
+} // namespace qtree
 
 #endif // _QUADTREE__H
 
